@@ -262,6 +262,16 @@
   }
   .restart-btn:hover { opacity: 0.82; }
 
+  .cat-img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 1.25rem;
+    display: block;
+    background: var(--accent-light);
+  }
+
   footer {
     margin-top: 2rem;
     font-size: 12px;
@@ -406,10 +416,35 @@ function choose(idx) {
   setTimeout(() => { current++; render(); }, 320);
 }
 
+// ── Google Sheets logging ──────────────────────────────────────────
+// Встав свій Apps Script URL замість цього рядка:
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdoLA41LDduS5Xgn75MXOAw0BjgPz_yMKkt-4ztVkmaEq_qYv1lzP2HbqV0Q2Ms5TY/exec';
+
+function logToSheets(specKey, specName) {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('uk-UA');
+  const timeStr = now.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+  const payload = {
+    result_code: specKey,
+    result_name: specName,
+    date: dateStr,
+    time: timeStr,
+  };
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(() => {}); // тихо ігноруємо помилки мережі
+}
+// ──────────────────────────────────────────────────────────────────
+
 function renderResult(area) {
   const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
   const [topKey] = sorted[0];
   const sp = specs[topKey];
+  logToSheets(topKey, sp.name);
   const maxScore = sorted[0][1] || 1;
 
   const othersHtml = sorted.slice(1, 5).map(([k, v]) => {
@@ -423,6 +458,7 @@ function renderResult(area) {
   }).join('');
 
   area.innerHTML = `
+    <img class="cat-img" src="https://cataas.com/cat?t=${Date.now()}" alt="котик">
     <span class="result-emoji">${sp.emoji}</span>
     <div class="result-label">Твоя спеціальність</div>
     <div class="result-name">${sp.name}</div>
