@@ -383,7 +383,22 @@ function logToSheets(specKey, specName) {
 }
 // ──────────────────────────────────────────────────────────────────
 
-function renderResult(area) {
+const BASE_URL = 'https://KucherP.github.io/test-quiz';
+
+async function getRandomCatImg(specKey) {
+  try {
+    const res = await fetch(`${BASE_URL}/cats/${specKey}/index.json`);
+    if (!res.ok) return null;
+    const files = await res.json();
+    if (!files || !files.length) return null;
+    const file = files[Math.floor(Math.random() * files.length)];
+    return `${BASE_URL}/cats/${specKey}/${file}`;
+  } catch {
+    return null;
+  }
+}
+
+async function renderResult(area) {
   const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
   const [topKey] = sorted[0];
   const sp = specs[topKey];
@@ -400,8 +415,11 @@ function renderResult(area) {
     </div>`;
   }).join('');
 
+  const imgSrc = await getRandomCatImg(topKey);
+  const imgHtml = imgSrc ? `<img class="cat-img" src="${imgSrc}" alt="котик">` : '';
+
   area.innerHTML = `
-    <img class="cat-img" src="https://cataas.com/cat?t=${Date.now()}" alt="котик">
+    ${imgHtml}
     <span class="result-emoji">${sp.emoji}</span>
     <div class="result-label">Твоя спеціальність</div>
     <div class="result-name">${sp.name}</div>
