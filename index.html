@@ -217,10 +217,16 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 7px 0;
+    padding: 9px 4px 9px 10px;
     border-bottom: 1px solid var(--border);
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    transition: background 0.12s, border-left-color 0.12s;
+    margin: 0 -2px;
   }
-  .other-item:last-child { border-bottom: none; }
+  .other-item:last-of-type { border-bottom: none; }
+  .other-item:hover { background: var(--accent-light); border-left-color: var(--accent); }
+  .other-item.open { background: var(--accent-light); border-left-color: var(--accent); }
 
   .other-emoji { font-size: 18px; width: 24px; text-align: center; }
 
@@ -570,11 +576,29 @@ async function renderResult(area) {
   const othersHtml = sorted.slice(1, 5).map(([k, v]) => {
     const s = specs[k];
     const pct = Math.round((v / maxScore) * 100);
-    return `<div class="other-item">
-      <span class="other-emoji">${s.emoji}</span>
-      <span class="other-name">${s.name}</span>
-      <div class="other-bar-wrap"><div class="other-bar" style="width:${pct}%"></div></div>
-    </div>`;
+    const progCount = s.programs.length;
+    const progWord = progCount === 1 ? 'освітня програма' : progCount < 5 ? 'освітні програми' : 'освітніх програм';
+    const progsList = s.programs.map(p => `
+      <div onclick="event.stopPropagation();openModal('${p.name.replace(/'/g, "\\'")}')"
+        style="display:flex;align-items:center;gap:8px;padding:8px 12px 8px 48px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--accent-light);">
+        <span style="color:var(--accent);font-size:12px;flex-shrink:0;">→</span>
+        <span style="font-size:12px;color:var(--accent);line-height:1.5;text-decoration:underline;text-underline-offset:3px;">${p.name}</span>
+      </div>`).join('');
+    return `
+      <div class="other-item" onclick="toggleOtherPrograms(this)">
+        <span class="other-emoji">${s.emoji}</span>
+        <div style="flex:1;min-width:0;">
+          <div class="other-name">${s.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${progCount} ${progWord}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <div class="other-bar-wrap"><div class="other-bar" style="width:${pct}%"></div></div>
+          <svg class="other-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;transition:transform 0.2s ease;"><path d="M5 7.5L10 12.5L15 7.5" stroke="#2F3D88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="other-programs" style="display:none;border-bottom:1px solid var(--border);">
+        ${progsList}
+      </div>`;
   }).join('');
 
   const imgSrc = await getRandomCatImg(topKey);
@@ -845,6 +869,15 @@ function closeModal() {
     }
   });
 })();
+
+function toggleOtherPrograms(el) {
+  const programsDiv = el.nextElementSibling;
+  const chevron = el.querySelector('.other-chevron');
+  const isOpen = programsDiv.style.display !== 'none';
+  programsDiv.style.display = isOpen ? 'none' : 'block';
+  el.classList.toggle('open', !isOpen);
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
 
 showSplash();
 </script>
